@@ -28,6 +28,57 @@ file that was distributed with this source code.
     {{ parent() }}
 {% endblock textarea_widget %}
 
+{% block money_widget -%}
+    {% if money_pattern == '{{ widget }}' %}
+        {{- block('form_widget_simple') -}}
+    {% else %}
+        {% set currencySymbol = money_pattern|replace({'{{ widget }}': ''})|trim %}
+        {% if money_pattern matches '/^{{ widget }}/' %}
+            <div class="input-group">
+                {{- block('form_widget_simple') -}}
+                <span class="input-group-addon">{{ currencySymbol }}</span>
+            </div>
+        {% elseif money_pattern matches '/{{ widget }}$/' %}
+            <div class="input-group">
+                <span class="input-group-addon">{{ currencySymbol }}</span>
+                {{- block('form_widget_simple') -}}
+            </div>
+        {% endif %}
+    {% endif %}
+{%- endblock money_widget %}
+
+{% block percent_widget %}
+    {% spaceless %}
+        {% set type = type|default('text') %}
+        <div class="input-group">
+            {{ block('form_widget_simple') }}
+            <span class="input-group-addon">%</span>
+        </div>
+    {% endspaceless %}
+{% endblock percent_widget %}
+
+{% block checkbox_widget -%}
+    {% set parent_label_class = parent_label_class|default('') -%}
+    {% if 'checkbox-inline' in parent_label_class %}
+        {{- form_label(form, null, { widget: parent() }) -}}
+    {% else -%}
+        <div class="checkbox">
+            {{- form_label(form, null, { widget: parent() }) -}}
+        </div>
+    {%- endif %}
+{%- endblock checkbox_widget %}
+
+{% block radio_widget -%}
+    {%- set parent_label_class = parent_label_class|default('') -%}
+    {% if 'radio-inline' in parent_label_class %}
+        {{- form_label(form, null, { widget: parent() }) -}}
+    {% else -%}
+        <div class="radio">
+            {{- form_label(form, null, { widget: parent() }) -}}
+        </div>
+    {%- endif %}
+{%- endblock radio_widget %}
+
 {# Labels #}
 {% block form_label %}
 {% spaceless %}
@@ -85,6 +136,39 @@ file that was distributed with this source code.
         {% if "class" not in attr %}class="list-unstyled"{%endif %}
     {% endspaceless %}
 {% endblock %}
+{% block checkbox_label -%}
+    {{- block('checkbox_radio_label') -}}
+{%- endblock checkbox_label %}
+
+{% block radio_label -%}
+    {{- block('checkbox_radio_label') -}}
+{%- endblock radio_label %}
+
+{% block checkbox_radio_label %}
+    {% if sonata_admin.admin %}
+        {% set translation_domain = sonata_admin.field_description.translationDomain %}
+    {% endif %}
+    {# Do not display the label if widget is not defined in order to prevent double label rendering #}
+    {% if widget is defined %}
+        {% if required %}
+            {% set label_attr = label_attr|merge({class: (label_attr.class|default('') ~ ' required')|trim}) %}
+        {% endif %}
+        {% if parent_label_class is defined %}
+            {% set label_attr = label_attr|merge({class: (label_attr.class|default('') ~ ' ' ~ parent_label_class)|trim}) %}
+        {% endif %}
+        {% if label is not same as(false) and label is empty %}
+            {% set label = name|humanize %}
+        {% endif %}
+        <label{% for attrname, attrvalue in label_attr %} {{ attrname }}="{{ attrvalue }}"{% endfor %}>
+            {{- widget|raw -}}
+            {%- if label is not same as(false) -%}
+                <span class="control-label__text">
+                    {{- label|trans({}, translation_domain) -}}
+                </span>
+            {%- endif -%}
+        </label>
+    {% endif %}
+{% endblock checkbox_radio_label %}
 
 {% block choice_widget_expanded %}
 {% spaceless %}
